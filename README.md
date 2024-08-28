@@ -24,30 +24,37 @@ The project run at 8082:
 
 #### GET Products
 get all avaliable products
+
 ```http
   GET /api/products?page=0&size=10
 ```
+
 #### POST products to the list
 add new product to the product list
+
 ```http
   POST /api/products/
 ```
+
 #### GET Cart
 get all product on the cart
 
 ```http
   GET /api/cart
 ```
+
 #### POST Cart to the cart list
 add product to the cart
 
 ```http
   POST /api/cart/add?productId=${productId}&quantity=${quantity}
 ```
+
 #### POST Order
 Finalize order on the cart list
 
 ```http
   POST /cart/place
 ```
+
 
