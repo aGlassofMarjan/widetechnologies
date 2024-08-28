@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Place Order</title>
+    <link rel="stylesheet" href="./style/style.css">
+</head>
+<body>
+    <h1>Place Order App</h1>
+    <br>
+    <h2>Add Product</h2>
+    <div class="container">
+        <!-- Here is the form to add products -->
+        <form id="add-product-form">
+            <label for="name">Name</label>
+            <input type="text" name="name" id="product-name">
+            <br>
+            <label for="type">Type</label>
+            <input type="text" name="type" id="product-type">
+            <br>
+            <label for="price">Price</label>
+            <input type="number" name="price" id="product-price">
+            <br>
+            <label for="quantity">Quantity</label>
+            <input type="number" name="quantity" id="product-quantity">
+
+            <!-- Button add product -->
+            <button type="button" id="add-product-btn">Add Product</button>
+        </form>
+    </div>
+    <br>
+    <h2>Products</h2>
+    <div class="product-list" id="product-list">
+        <!-- product info card will be displayed here -->
+    </div>
+    <div style="display: flex; width: 100%; justify-content: center;">
+        <div style="display: flex; gap: 1vh;">
+            <!-- pagination buttons -->
+            <button id="prev-btn">Prev</button>
+            <button id="next-btn">Next</button>
+        </div>
+    </div>
+    <br>
+    <h2>Order Table</h2>
+    <table>
+        <thead>
+            <tr>
+                <td>Name</td>
+                <td>Type</td>
+                <td>Price</td>
+                <td>Quantity</td>
+            </tr>
+        </thead>
+        <tbody id="order-table-body">
+            <!-- ordered items will be displayed here -->
+        </tbody>
+    </table>
+    <div style="width: 100%; display: flex; justify-content: right;">
+        <div>
+            <!-- summarize the prices on the client side -->
+            <p id="total-price">Total: 0</p>
+
+            <!-- order button for /api/cart/place -->
+            <button style="width: 20vh;" id="order-btn">Order</button>
+        </div>
+    </div>
+
+    <!-- script to wiring to API -->
+    <script>
+        let currentPage = 0;
+        const pageSize = 10;
+
+        // add product to product list
+        document.getElementById('add-product-btn').addEventListener('click', () => {
+            const name = document.getElementById('product-name').value;
+            const type = document.getElementById('product-type').value;
+            const price = document.getElementById('product-price').value;
+            const quantity = document.getElementById('product-quantity').value;
+
+            fetch('http://localhost:8082/api/products', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, type, price, quantity })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Product added successfully');
+                fetchProducts();
+            })
+            .catch(error => console.error('Error adding product:', error));
+        });
+
+        // get product list by fetch
+        function fetchProducts() {
+            fetch(`http://localhost:8082/api/products?page=${currentPage}&size=${pageSize}`)
+                .then(response => response.json())
+                .then(data => {
+                    displayProducts(data);
+                })
+                .catch(error => console.error('Error fetching products:', error));
+        }
+
+        // display list of products to html
+        function displayProducts(products) {
+            const productList = document.getElementById('product-list');
+            productList.innerHTML = '';  // Clear previous products
+
+            products.forEach(product => {
+                const productCard = document.createElement('div');
+                productCard.classList.add('card');
+                productCard.innerHTML = `
+                    <div class="content">
+                        <h3>Name: ${product.name}</h3>
+                        <p>Type: ${product.type}</p>
+                    </div>
+                    <div class="content">
+                        <p>Price: ${product.price}</p>
+                        <p>Quantity: ${product.quantity}</p>
+                    </div>
+                    <button onclick="addToCart(${product.id}, 1)">Add to cart</button>
+                `;
+                productList.appendChild(productCard);
+            });
+        }
+
+        // add items to cart based from product id and qty
+        function addToCart(productId, quantity) {
+            fetch(`http://localhost:8082/api/cart/add?productId=${productId}&quantity=${quantity}`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Product added to cart');
+                fetchCartItems();
+                fetchProducts(); // refresh product list quantities
+            })
+            .catch(error => console.error('Error adding to cart:', error));
+        }
+
+        // get data items on cart
+        function fetchCartItems() {
+            fetch('http://localhost:8082/api/cart')
+                .then(response => response.json())
+                .then(data => {
+                    displayCartItems(data);
+                    calculateTotal(data);
+                })
+                .catch(error => console.error('Error fetching cart items:', error));
+        }
+
+        // display cart items
+        function displayCartItems(cartItems) {
+            const orderTableBody = document.getElementById('order-table-body');
+            orderTableBody.innerHTML = '';  // Clear previous items
+
+            cartItems.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.name}</td>
+                    <td>${item.type}</td>
+                    <td>${item.price}</td>
+                    <td>${item.quantity}</td>
+                `;
+                orderTableBody.appendChild(row);
+            });
+        }
+
+        // calculate total price on client side
+        function calculateTotal(cartItems) {
+            let total = 0;
+            cartItems.forEach(item => {
+                total += item.price * item.quantity;
+            });
+            document.getElementById('total-price').textContent = `Total: ${total}`;
+        }
+
+        // pagination
+        document.getElementById('prev-btn').addEventListener('click', () => {
+            if (currentPage > 0) {
+                currentPage--;
+                fetchProducts();
+            }
+        });
+
+        document.getElementById('next-btn').addEventListener('click', () => {
+            currentPage++;
+            fetchProducts();
+        });
+
+        // to order the cart
+        document.getElementById('order-btn').addEventListener('click', () => {
+            fetch('http://localhost:8082/api/cart/place', {
+                method: 'POST'
+            })
+            .then(response => {
+                alert('Order placed successfully');
+                fetchCartItems();  // Clear the cart after placing the order
+            })
+            .catch(error => console.error('Error placing order:', error));
+        });
+
+        // refetch products and cart items on page load
+        fetchProducts();
+        fetchCartItems();
+    </script>
+</body>
+</html>

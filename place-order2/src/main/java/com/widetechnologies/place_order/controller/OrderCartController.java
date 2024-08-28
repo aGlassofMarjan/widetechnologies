@@ -20,16 +20,19 @@ import lombok.RequiredArgsConstructor;
 public class OrderCartController {
     private final OrderCartService orderCartService;
 
+    // GET Cart
     @GetMapping
     public ResponseEntity<List<OrderCartItem>> getOrderCart() {
         return ResponseEntity.ok(orderCartService.getAllOrderCartItems());
     }
 
+    // POST Cart
     @PostMapping("/add")
     public ResponseEntity<OrderCartItem> addToCart(@RequestParam Long productId, @RequestParam int quantity) {
         return ResponseEntity.ok(orderCartService.addToCart(productId, quantity));
     }
 
+    // POST Finalize order
     @PostMapping("place")
     public ResponseEntity<Void> placeOrder() {
         orderCartService.placeOrder();

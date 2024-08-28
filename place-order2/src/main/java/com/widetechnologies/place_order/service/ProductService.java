@@ -29,6 +29,7 @@ public class ProductService {
         return productRepository.findById(id).orElseThrow(() -> new NoSuchElementException("Product Not Found with id: " + id));
     }
 
+    // reduce product quantity if product added to cart
     public void reduceProductQuantity(Long productId, int quantity) {
         Product product = getProductById(productId);
         if (product.getQuantity() >= quantity) {

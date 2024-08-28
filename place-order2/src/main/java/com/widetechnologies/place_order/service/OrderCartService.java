@@ -22,16 +22,21 @@ public class OrderCartService {
         return orderCartItemRepository.findAll();
     }
 
+    
     public OrderCartItem addToCart(Long productId, int quantity) {
+        // 1. get product detail
         Product product = productService.getProductById(productId);
 
+        // 2. reduce product quantity
         productService.reduceProductQuantity(productId, quantity);
 
+        // search if item already exist 
         Optional<OrderCartItem> existingItem = orderCartItemRepository.findAll()
                 .stream()
                 .filter(item -> item.getName().equals(product.getName()))
                 .findFirst();
 
+        // if already item exist => just add quantity = else => create new cart item
         if (existingItem.isPresent()) {
             OrderCartItem orderCartItem = existingItem.get();
             orderCartItem.setQuantity(orderCartItem.getQuantity() + quantity);
@@ -46,6 +51,7 @@ public class OrderCartService {
         }
     }
 
+    // if order finalized, items will be deleted
     public void placeOrder() {
         orderCartItemRepository.deleteAll();
     }
