@@ -6,27 +6,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.widetechnologies.place_order.entity.Order;
-import com.widetechnologies.place_order.entity.OrderItem;
 import com.widetechnologies.place_order.repository.OrderRepository;
-import com.widetechnologies.place_order.repository.ProductRepository;
 
 @Service
 public class OrderService {
     @Autowired
     private OrderRepository orderRepository;
-    @Autowired
-    private ProductRepository productRepository;
-
-    public Order createOrder(String customerName, String customerAddress, List<OrderItem> items) {
-        Order order = new Order();
-        order.setCustomerName(customerName);
-        order.setCustomerAddress(customerAddress);
-        order.setItems(items);
-        order.setTotalAmount(calculateTotal(items));
-        return orderRepository.save(order);
+    
+    public List<Order> getAllOrders() {
+        return orderRepository.findAll();
     }
 
-    private double calculateTotal(List<OrderItem> items) {
-        return items.stream().mapToDouble(OrderItem::getTotalPrice).sum();
+    public Order getOrderById(Long id) {
+        return orderRepository.findById(id).orElse(null);
+    }
+
+    public Order saveOrder(Order order) {
+        return orderRepository.save(order);
     }
 }

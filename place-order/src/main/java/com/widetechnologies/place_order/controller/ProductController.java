@@ -21,12 +21,14 @@ public class ProductController {
     @Autowired
     private ProductService productService;
     
+    // GET Products
     @GetMapping
     public List<Product> getAllProducts(@RequestParam int page, @RequestParam int size) {
         Pageable pageable = PageRequest.of(page, size);
         return productService.getAllProducts(pageable);
     }
 
+    // POST Products
     @PostMapping
     public Product createProduct(@RequestBody Product product) {
         return productService.saveProduct(product);
